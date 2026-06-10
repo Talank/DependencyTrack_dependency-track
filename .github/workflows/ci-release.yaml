@@ -18,33 +18,11 @@ name: Release CI
 
 on:
   workflow_dispatch:
-    inputs:
-      release-version:
-        required: false
-        default: ''
-        description: >-
-          Release version (e.g. 5.7.0 or 5.7.0-rc.1).
-          Leave empty to let Maven compute it from the current SNAPSHOT version.
-        type: string
-      development-version:
-        required: false
-        default: ''
-        description: >-
-          Next development version (e.g. 5.8.0-SNAPSHOT).
-          Leave empty for automatic increment (e.g. 5.7.1-SNAPSHOT or 5.7.0-rc.2-SNAPSHOT).
-        type: string
-      dry-run:
-        required: false
-        default: false
-        description: >-
-          Perform a dry run without pushing changes or creating releases.
-        type: boolean
-
-permissions: { }
+permissions: {}
 
 jobs:
   release:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     steps:
       - name: Checkout Repository
@@ -86,10 +64,10 @@ jobs:
           mvn release:prepare
 
       - name: Create GitHub Release
-        if: ${{ !inputs.dry-run }}
+        if: always()
         env:
           GITHUB_TOKEN: ${{ secrets.BOT_RELEASE_GITHUB_TOKEN }}
-        run: |
+        run: |-
           RELEASE_VERSION=$(git describe --tags --abbrev=0)
           echo "Release version: ${RELEASE_VERSION}"
 
@@ -102,3 +80,10 @@ jobs:
             --draft \
             --generate-notes \
             ${PRERELEASE_FLAG}
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest
+      fail-fast: false
