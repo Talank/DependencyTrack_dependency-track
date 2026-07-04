@@ -15,33 +15,26 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright (c) OWASP Foundation. All Rights Reserved.
 on:
-  workflow_call:
+  workflow_dispatch:
     inputs:
       app-version:
         type: string
-        required: true
         description: "the version that should be set/used as tag for the container image"
+        default: ''
       publish-container:
         type: boolean
-        required: false
-        default: false
         description: "publish and scan the container image once its built"
+        default: false
       ref-name:
         type: string
-        required: true
         description: "Short ref name of the branch or tag that triggered the workflow run"
-    secrets:
-      registry-0-usr:
-        required: true
-      registry-0-psw:
-        required: true
-
-permissions: { }
+        default: ''
+permissions: {}
 
 jobs:
   build-java:
     name: Build Java
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 5
     steps:
       - name: Checkout Repository
@@ -110,6 +103,12 @@ jobs:
           name: openapi-spec
           path: openapi-spec/
 
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - ubuntu-24.04-arm
+      fail-fast: false
   build-container:
     name: Build Container (${{ matrix.name }})
     runs-on: ubuntu-latest

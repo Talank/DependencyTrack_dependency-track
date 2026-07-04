@@ -17,38 +17,16 @@
 name: Build CI
 
 on:
-  push:
-    branches:
-      - 'main'
-      - 'feature-**'
-      - '[0-9]+.[0-9]+.x' # Release branches
-    paths-ignore:
-      - '**/*.md'
-      - 'docs/**'
-  pull_request:
-    branches:
-      - 'main'
-      - 'feature-**'
-    paths-ignore:
-      - '**/*.md'
-      - 'docs/**'
   workflow_dispatch:
-    inputs:
-      app-version:
-        type: string
-        required: false
-        default: ""
-        description: "Override the derived app-version (e.g. 5.0.0 or 5.0.0-rc.1). Leave empty to use the derived snapshot tag (e.g. 5-snapshot)."
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
-permissions: { }
+permissions: {}
 
 jobs:
   read-version:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 5
     outputs:
       major: ${{ steps.parse.outputs.major }}
@@ -72,6 +50,12 @@ jobs:
           MAJOR="${VERSION%%.*}"
           echo "major=${MAJOR}" >> "$GITHUB_OUTPUT"
 
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - ubuntu-24.04-arm
+      fail-fast: false
   call-build:
     name: Build
     needs:
@@ -85,4 +69,5 @@ jobs:
       packages: write # Required to push images to ghcr.io
     secrets:
       registry-0-usr: ${{ github.repository_owner }}
-      registry-0-psw: ${{ github.repository_owner == 'DependencyTrack' && secrets.BOT_IMAGE_PUSH_TOKEN || secrets.GITHUB_TOKEN }}
+      registry-0-psw: ${{ github.repository_owner == 'DependencyTrack' && secrets.BOT_IMAGE_PUSH_TOKEN || 
+        secrets.GITHUB_TOKEN }}

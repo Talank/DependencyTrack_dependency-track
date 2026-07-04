@@ -17,22 +17,6 @@
 name: Tests CI
 
 on:
-  push:
-    branches:
-      - 'main'            # Main branch
-      - 'feature-**'      # Feature branch
-      - '[0-9]+.[0-9]+.x' # Release branches
-    paths-ignore:
-      - '**/*.md'
-      - 'docs/**'
-  pull_request:
-    branches:
-      - 'main'            # Main branch
-      - 'feature-**'      # Feature branch
-      - '[0-9]+.[0-9]+.x' # Release branches
-    paths-ignore:
-      - '**/*.md'
-      - 'docs/**'
   workflow_dispatch:
 
 # The following concurrency group cancels in-progress jobs or runs on pull_request events only;
@@ -42,12 +26,12 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
-permissions: { }
+permissions: {}
 
 jobs:
   test:
     name: Test
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     steps:
       - name: Checkout repository
@@ -75,11 +59,11 @@ jobs:
         run: make test
 
       - name: Generate test report
-        if: ${{ always() }}
+        if: always()
         run: mvn -B surefire-report:report-only -Daggregate=true -DlinkXRef=false
 
       - name: Upload test report
-        if: ${{ always() }}
+        if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # tag=v7.0.1
         with:
           name: test-report
@@ -90,7 +74,7 @@ jobs:
       # PRs from forks do not get access to repository secrets.
       # https://securitylab.github.com/research/github-actions-preventing-pwn-requests/
       - name: Publish test coverage
-        if: ${{ github.event_name != 'pull_request' && github.repository_owner == 'DependencyTrack' }}
+        if: always()
         uses: codacy/codacy-coverage-reporter-action@89d6c85cfafaec52c72b6c5e8b2878d33104c699 # tag=v1.3.0
         with:
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
@@ -98,7 +82,7 @@ jobs:
           coverage-reports: coverage-report/target/site/jacoco-aggregate/jacoco.xml
 
       - name: Upload PR workspace
-        if: ${{ github.event_name == 'pull_request' }}
+        if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # tag=v7.0.1
         with:
           name: pr-workspace
@@ -111,3 +95,9 @@ jobs:
             !./**/bom.json
             !./apiserver/target/dependency-track-apiserver/**/*
             !./apiserver/target/war/**/*
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - ubuntu-24.04-arm
+      fail-fast: false

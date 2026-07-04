@@ -17,33 +17,17 @@
 name: Lint
 
 on:
-  push:
-    branches:
-      - 'main'            # Main branch
-      - 'feature-**'      # Feature branch
-      - '[0-9]+.[0-9]+.x' # Release branches
-    paths-ignore:
-      - '**/*.md'
-      - 'docs/**'
-  pull_request:
-    branches:
-      - 'main'            # Main branch
-      - 'feature-**'      # Feature branch
-      - '[0-9]+.[0-9]+.x' # Release branches
-    paths-ignore:
-      - '**/*.md'
-      - 'docs/**'
-
+  workflow_dispatch:
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
-permissions: { }
+permissions: {}
 
 jobs:
   lint-java:
     name: Lint Java
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 5
     steps:
       - name: Checkout repository
@@ -59,6 +43,12 @@ jobs:
       - name: Lint
         run: make lint-java
 
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - ubuntu-24.04-arm
+      fail-fast: false
   lint-protobuf:
     name: Lint Protobuf
     runs-on: ubuntu-latest
@@ -122,6 +112,7 @@ jobs:
       - name: Detect Breaking Changes
         uses: oasdiff/oasdiff-action/breaking@50e6a3413e5aa9c3ae4d8393c34745be44288b46 # tag=v0.0.48
         with:
-          base: https://raw.githubusercontent.com/${{ github.repository }}/refs/heads/main/api/src/main/openapi/openapi.yaml
+          base: https://raw.githubusercontent.com/${{ github.repository 
+            }}/refs/heads/main/api/src/main/openapi/openapi.yaml
           revision: api/src/main/openapi/openapi.yaml
           fail-on: ERR

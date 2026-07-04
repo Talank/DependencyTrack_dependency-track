@@ -17,20 +17,18 @@
 name: E2E Tests
 
 on:
-  schedule:
-    - cron: '0 2 * * *'
-  workflow_dispatch: { }
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-permissions: { }
+permissions: {}
 
 jobs:
   test-e2e:
     name: Test E2E
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     steps:
       - name: Checkout repository
@@ -47,3 +45,9 @@ jobs:
 
       - name: Execute end-to-end tests
         run: make test-e2e
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - ubuntu-24.04-arm
+      fail-fast: false
