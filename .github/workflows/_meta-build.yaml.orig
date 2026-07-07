@@ -62,17 +62,8 @@ jobs:
         run: |
           mkdir -p "$HOME/.local/bin"
           echo "$HOME/.local/bin" >> $GITHUB_PATH
-          if [ "$(uname -m)" = "aarch64" ]; then
-            CDXCLI_ASSET="cyclonedx-linux-arm64"
-            CDXCLI_SHA256="skip"
-          else
-            CDXCLI_ASSET="cyclonedx-linux-x64"
-            CDXCLI_SHA256="ef0d3b31d176e02bc594f83e19cfcea053c6bc5b197351f71696e189390f851d"
-          fi
-          wget -O "$HOME/.local/bin/cyclonedx" "https://github.com/CycloneDX/cyclonedx-cli/releases/download/v0.24.2/${CDXCLI_ASSET}"
-          if [ "$CDXCLI_SHA256" != "skip" ]; then
-            echo "${CDXCLI_SHA256} $HOME/.local/bin/cyclonedx" | sha256sum -c
-          fi
+          wget -O "$HOME/.local/bin/cyclonedx" https://github.com/CycloneDX/cyclonedx-cli/releases/download/v0.24.2/cyclonedx-linux-x64
+          echo "ef0d3b31d176e02bc594f83e19cfcea053c6bc5b197351f71696e189390f851d $HOME/.local/bin/cyclonedx" | sha256sum -c
           chmod +x "$HOME/.local/bin/cyclonedx"
 
       - name: Build with Maven
